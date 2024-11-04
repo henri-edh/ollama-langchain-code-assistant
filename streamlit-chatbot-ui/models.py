@@ -1,9 +1,13 @@
 import os
 from langchain_ollama import OllamaEmbeddings, ChatOllama
-from langchain_openai import AzureOpenAIEmbeddings, AzureChatOpenAI
+from groq import Groq
+from dotenv import load_dotenv
 
 class Models:
     def __init__(self):
+        # Load environment variables from .env file
+        load_dotenv()
+
         # ollama pull mxbai-embed-large
         self.embeddings_ollama = OllamaEmbeddings(
             model="mxbai-embed-large"
@@ -15,21 +19,27 @@ class Models:
             temperature=0,
         )
 
-        # Azure OpenAI embeddings
-        self.embeddings_openai = AzureOpenAIEmbeddings(
-            model="text-embedding-3-large",
-            dimensions=1536,  # Can specify dimensions with new text-embedding-3 models
-            azure_endpoint=os.environ.get("AZURE_OPENAI_EMBEDDINGS_ENDPOINT"),
-            api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
-            api_version=os.environ.get("AZURE_OPENAI_EMBEDDINGS_API_VERSION"),
+        # Groq AI client with API key
+        client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+
+        # Groq AI embeddings
+        self.embeddings_groq = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[{"role": "system", "content": "Initialize embeddings"}],
+            temperature=1,
+            max_tokens=1024,
+            top_p=1,
+            stream=True,
+            stop=None,
         )
 
-        # Azure OpenAI chat model
-        self.model_openai = AzureChatOpenAI(
-            azure_deployment=os.environ.get("AZURE_OPENAI_API_DEPLOYMENT_NAME"),
-            api_version=os.environ.get("AZURE_OPENAI_API_VERSION"),
-            temperature=0,
-            max_tokens=None,
-            timeout=None,
-            max_retries=2,
+        # Groq AI chat model
+        self.model_groq = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[{"role": "system", "content": "Initialize chat model"}],
+            temperature=1,
+            max_tokens=1024,
+            top_p=1,
+            stream=True,
+            stop=None,
         )
